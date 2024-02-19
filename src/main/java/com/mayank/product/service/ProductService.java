@@ -9,7 +9,9 @@ import java.util.List;
 
 @Service
 public interface ProductService {
-    public List<Product> getAllProducts() throws ProductNotFoundException;
+    List<Product> getAllProducts() throws ProductNotFoundException;
 
-    public ResponseEntity<String> saveProduct(Product product);
+    ResponseEntity<String> saveProduct(Product product);
+
+    ResponseEntity<String> deleteProductById(String id);
 }

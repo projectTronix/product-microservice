@@ -4,6 +4,7 @@ import com.mayank.product.dto.Product;
 import com.mayank.product.exception.ProductNotFoundException;
 import com.mayank.product.service.CategoryService;
 import com.mayank.product.service.ProductService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -16,19 +17,14 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 @RestController
-@RequestMapping("product")
+@RequiredArgsConstructor
+@RequestMapping("products/")
 @Validated
 public class ProductController {
-    ProductService productService;
-    CategoryService categoryService;
-
-    public ProductController(ProductService productService, CategoryService categoryService) {
-        this.productService = productService;
-        this.categoryService = categoryService;
-    }
-
-    LogManager logManager = LogManager.getLogManager();
-    Logger logger = logManager.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private final ProductService productService;
+    private final CategoryService categoryService;
+    private final LogManager logManager = LogManager.getLogManager();
+    private final Logger logger = logManager.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
     @GetMapping("/all")
     public ResponseEntity<List<Product>> getAllProducts() {
@@ -39,10 +35,6 @@ public class ProductController {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.CONFLICT);
         }
     }
-    //    @GetMapping("/id/{id}")
-//    public ResponseEntity<Product> getById(@PathVariable @Valid @NotBlank(message="ysdhjs") String id) {
-//        return new ResponseEntity<>(null);
-//    }
     @PostMapping("/add")
     public ResponseEntity<?> postProduct(@RequestBody Product product) {
         try {
@@ -50,7 +42,8 @@ public class ProductController {
             String description = product.getDescription();
             String imgUrl = product.getImageUrl();
             Integer price = product.getPrice();
-            String categoryID = product.getCategoryID();
+            String categoryID = categoryService.getCategoryIDByTitle(product.getCategoryID());
+            product.setCategoryID(categoryID);
             if(title.isBlank() || description.isBlank() || imgUrl.isBlank()) {
                 logger.log(Level.WARNING, "Title or Description or Image URL is Empty.");
                 throw new Exception("Title or Description or Image URL is Empty.");
@@ -62,6 +55,21 @@ public class ProductController {
             }
             logger.log(Level.INFO, "Product added Successfully.");
             return new ResponseEntity<>(product, HttpStatus.CREATED);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, e.getMessage());
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProduct(@PathVariable("id") String id) {
+        try {
+            ResponseEntity<String> response = productService.deleteProductById(id);
+            if(response.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                logger.log(Level.WARNING, "Product with given ID doesn't exists.");
+                throw new Exception("Product with given ID doesn't exists.");
+            }
+            logger.log(Level.INFO, "Product deleted Successfully.");
+            return new ResponseEntity<>("Product deleted Successfully.", HttpStatus.OK);
         } catch(Exception e) {
             logger.log(Level.WARNING, e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
