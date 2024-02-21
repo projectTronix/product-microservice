@@ -1,17 +1,15 @@
 package com.mayank.product.service;
 
 import com.mayank.product.dto.Category;
-import com.mayank.product.exception.ProductNotFoundException;
-import org.springframework.http.ResponseEntity;
+import com.mayank.product.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public interface CategoryService {
-    List<Category> getAllCategories() throws ProductNotFoundException;
-    ResponseEntity<String> saveCategory(Category category);
-    String getCategoryIDByTitle(String title);
-    Optional<Category> getCategoryByTitle(String title) throws ProductNotFoundException;
+    List<Category> getAllCategories() throws ResourceNotFoundException;
+    boolean saveCategory(Category category) throws Exception;
+    String getCategoryIDByTitle(String title) throws Exception;
+    Category getCategoryByTitle(String title) throws Exception;
 }

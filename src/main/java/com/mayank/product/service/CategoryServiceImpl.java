@@ -1,61 +1,69 @@
 package com.mayank.product.service;
 
 import com.mayank.product.dto.Category;
-import com.mayank.product.exception.ProductNotFoundException;
+import com.mayank.product.exception.ResourceNotFoundException;
 import com.mayank.product.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 @Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
+    private final LogManager logManager = LogManager.getLogManager();
+    private final Logger logger = logManager.getLogger(Logger.GLOBAL_LOGGER_NAME);
     @Override
-    public List<Category> getAllCategories() throws ProductNotFoundException {
+    public List<Category> getAllCategories() throws ResourceNotFoundException {
         List<Category> categories = categoryRepository.findAll();
         if(categories.isEmpty()) {
-            throw new ProductNotFoundException("No Categories found.");
+            throw new ResourceNotFoundException("No Categories found.");
         }
         return categories;
     }
 
     @Override
-    public ResponseEntity<String> saveCategory(Category category) {
+    public boolean saveCategory(Category category) throws Exception {
         try {
             categoryRepository.save(category);
-            return new ResponseEntity<>(HttpStatus.CREATED);
+            return true;
         } catch(Exception e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            logger.log(Level.WARNING, "Encountered a problem in saveCategory in CategoryService - "+ e.getMessage());
+            throw new Exception(e.getMessage());
         }
     }
 
     @Override
-    public String getCategoryIDByTitle(String title) {
+    public String getCategoryIDByTitle(String title) throws Exception {
         try {
             Optional<Category> opt = categoryRepository.findByTitle(title);
             if(opt.isEmpty()) {
-                throw new ProductNotFoundException("Invalid Category Title.");
+                throw new ResourceNotFoundException("Invalid Category Title.");
             }
             return opt.get().getCategoryId();
-        } catch(ProductNotFoundException e) {
-            return e.getMessage();
         } catch(Exception e) {
-            return "Encountered a problem while fetching Category ID from title.";
+            logger.log(Level.WARNING, "Encountered a problem while fetching Category ID from title in getCategoryIDByTitle in CategoryService - " + e.getMessage());
+            throw new Exception("Encountered a problem while fetching Category ID from title.");
         }
     }
 
     @Override
-    public Optional<Category> getCategoryByTitle(String title) throws ProductNotFoundException {
-        Optional<Category> opt = categoryRepository.findByTitle(title);
-        if(opt.isEmpty()) {
-            throw new ProductNotFoundException("Invalid Category Title.");
+    public Category getCategoryByTitle(String title) throws Exception {
+        try {
+            Optional<Category> opt = categoryRepository.findByTitle(title);
+            if(opt.isEmpty()) {
+                throw new ResourceNotFoundException("Invalid Category Title.");
+            }
+            return opt.get();
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching Category ID from title in getCategoryByTitle in CategoryService -" + e.getMessage());
+            throw new Exception("Encountered a problem while fetching Category from title.");
         }
-        return opt;
     }
 
 }

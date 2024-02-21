@@ -1,7 +1,8 @@
 package com.mayank.product.controller;
 
+import com.mayank.product.dto.CustomResponse;
 import com.mayank.product.dto.Product;
-import com.mayank.product.exception.ProductNotFoundException;
+import com.mayank.product.exception.ResourceNotFoundException;
 import com.mayank.product.service.CategoryService;
 import com.mayank.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +30,16 @@ public class ProductController {
     @GetMapping("/all")
     public ResponseEntity<List<Product>> getAllProducts() {
         try {
-            return new ResponseEntity<>(productService.getAllProducts(), HttpStatus.OK);
-        } catch(ProductNotFoundException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.CONFLICT);
+            List<Product> products = productService.getAllProducts();
+            logger.log(Level.INFO, "Products fetched successfully.");
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching products -- getAllProducts in ProductController. - " + e.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
     }
     @PostMapping("/add")
-    public ResponseEntity<?> postProduct(@RequestBody Product product) {
+    public CustomResponse postProduct(@RequestBody Product product) {
         try {
             String title = product.getTitle();
             String description = product.getDescription();
@@ -48,31 +51,49 @@ public class ProductController {
                 logger.log(Level.WARNING, "Title or Description or Image URL is Empty.");
                 throw new Exception("Title or Description or Image URL is Empty.");
             }
-            ResponseEntity<String> response = productService.saveProduct(product);
-            if(response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-                logger.log(Level.WARNING, "Product already exists.");
-                throw new Exception("Product already exists.");
-            }
+            boolean status = productService.saveProduct(product);
+            if(!status) throw new Exception();
             logger.log(Level.INFO, "Product added Successfully.");
-            return new ResponseEntity<>(product, HttpStatus.CREATED);
+            return new CustomResponse("Product added Successfully.", HttpStatus.CREATED);
         } catch(Exception e) {
-            logger.log(Level.WARNING, e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            logger.log(Level.WARNING, "Encountered a problem while adding product -- postProduct in ProductController. - " + e.getMessage());
+            return new CustomResponse("Encountered a problem while adding product.", HttpStatus.BAD_REQUEST);
         }
     }
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteProduct(@PathVariable("id") String id) {
+    public CustomResponse deleteProduct(@PathVariable("id") String id) {
         try {
-            ResponseEntity<String> response = productService.deleteProductById(id);
-            if(response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-                logger.log(Level.WARNING, "Product with given ID doesn't exists.");
-                throw new Exception("Product with given ID doesn't exists.");
+            boolean status = productService.deleteProductById(id);
+            if(!status) {
+                throw new Exception();
             }
             logger.log(Level.INFO, "Product deleted Successfully.");
-            return new ResponseEntity<>("Product deleted Successfully.", HttpStatus.OK);
+            return new CustomResponse("Product Deleted Successfully.", HttpStatus.OK);
         } catch(Exception e) {
-            logger.log(Level.WARNING, e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            logger.log(Level.WARNING, "Encountered a problem while deleting product -- deleteProductById in ProductController. - " + e.getMessage());
+            return new CustomResponse("Encountered a problem while deleting the product.", HttpStatus.BAD_REQUEST);
+        }
+    }
+    @GetMapping("/sortedByPrice")
+    public ResponseEntity<List<Product>> getProductsSortedByPrice(@RequestParam boolean asc) {
+        try {
+            List<Product> products = productService.getProductsSortedByPrice(asc);
+            logger.log(Level.INFO, "Sorted Products fetched successfully.");
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching products -- getProductsSortedByPrice in ProductController. - " + e.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+        }
+    }
+    @GetMapping("/sortedByName")
+    public ResponseEntity<List<Product>> getProductsSortedByName(@RequestParam boolean asc) {
+        try {
+            List<Product> products = productService.getProductsSortedByName(asc);
+            logger.log(Level.INFO, "Sorted Products fetched successfully.");
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching products -- getProductsSortedByName in ProductController. - " + e.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
     }
 }

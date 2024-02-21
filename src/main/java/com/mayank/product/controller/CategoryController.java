@@ -1,7 +1,8 @@
 package com.mayank.product.controller;
 
 import com.mayank.product.dto.Category;
-import com.mayank.product.exception.ProductNotFoundException;
+import com.mayank.product.dto.CustomResponse;
+import com.mayank.product.exception.ResourceNotFoundException;
 import com.mayank.product.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -25,14 +25,16 @@ public class CategoryController {
     @GetMapping("/all")
     public ResponseEntity<List<Category>> getAllCategories() {
         try {
-            return new ResponseEntity<>(categoryService.getAllCategories(), HttpStatus.OK);
-        } catch(ProductNotFoundException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.CONFLICT);
+            List<Category> categories = categoryService.getAllCategories();
+            logger.log(Level.INFO, "Categories fetched successfully.");
+            return new ResponseEntity<>(categories, HttpStatus.OK);
+        } catch(ResourceNotFoundException e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching categories in CategoryController. - " + e.getMessage());
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
     }
     @PostMapping("/add")
-    public ResponseEntity<String> postCategory(@RequestBody Category category) {
+    public CustomResponse postCategory(@RequestBody Category category) {
         try {
             String title = category.getTitle();
             String description = category.getDescription();
@@ -41,25 +43,24 @@ public class CategoryController {
                 logger.log(Level.WARNING, "Title or Description or Image URL is Empty.");
                 throw new Exception("Title or Description or Image URL is Empty.");
             }
-            ResponseEntity<String> response = categoryService.saveCategory(category);
-            if(response.getStatusCode() == HttpStatus.BAD_REQUEST) {
-                logger.log(Level.WARNING, "Category already exists.");
-                throw new Exception("Category already exists.");
-            }
+            boolean status = categoryService.saveCategory(category);
+            if(!status) throw new Exception();
             logger.log(Level.INFO, "Category added Successfully.");
-            return new ResponseEntity<>("Category added Successfully.", HttpStatus.CREATED);
+            return new CustomResponse("Category added Successfully.", HttpStatus.CREATED);
         } catch(Exception e) {
-            logger.log(Level.WARNING, e.getMessage());
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            logger.log(Level.WARNING, "Encountered a problem while adding category -- postCategory in CategoryController. - " + e.getMessage());
+            return new CustomResponse("Encountered a problem while adding category.", HttpStatus.BAD_REQUEST);
         }
     }
     @GetMapping("/{title}")
-    public ResponseEntity<Category> getCategoryByTitle(@PathVariable("title") String title) {
+    public ResponseEntity<?> getCategoryByTitle(@PathVariable("title") String title) {
         try {
-            Optional<Category> category = categoryService.getCategoryByTitle(title);
-            return category.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
-        } catch(ProductNotFoundException e) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            Category category = categoryService.getCategoryByTitle(title);
+            logger.log(Level.INFO, "Category fetched Successfully.");
+            return new ResponseEntity<>(category, HttpStatus.OK);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching category -- getCategoryByTitle in CategoryController : " + e.getMessage());
+            return new ResponseEntity<>("Encountered a problem while fetching category.", HttpStatus.NOT_FOUND);
         }
     }
 }
