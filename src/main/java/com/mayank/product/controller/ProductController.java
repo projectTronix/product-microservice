@@ -2,10 +2,13 @@ package com.mayank.product.controller;
 
 import com.mayank.product.dto.CustomResponse;
 import com.mayank.product.dto.Product;
-import com.mayank.product.exception.ResourceNotFoundException;
 import com.mayank.product.service.CategoryService;
 import com.mayank.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -45,6 +48,10 @@ public class ProductController {
             String description = product.getDescription();
             String imgUrl = product.getImageUrl();
             Integer price = product.getPrice();
+            if(price <= 0) {
+                logger.log(Level.WARNING, "Price cannot be less than 0.");
+                throw new Exception("Price cannot be less than 0..");
+            }
             String categoryID = categoryService.getCategoryIDByTitle(product.getCategoryID());
             product.setCategoryID(categoryID);
             if(title.isBlank() || description.isBlank() || imgUrl.isBlank()) {
@@ -74,26 +81,29 @@ public class ProductController {
             return new CustomResponse("Encountered a problem while deleting the product.", HttpStatus.BAD_REQUEST);
         }
     }
-    @GetMapping("/sortedByPrice")
-    public ResponseEntity<List<Product>> getProductsSortedByPrice(@RequestParam boolean asc) {
+    @GetMapping("/search")
+    public ResponseEntity<Page<Product>> searchPerson(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer minPrice,
+            @RequestParam(required = false) Integer maxPrice,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(defaultValue = "1") Integer direction,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "5") Integer size
+    ) {
         try {
-            List<Product> products = productService.getProductsSortedByPrice(asc);
-            logger.log(Level.INFO, "Sorted Products fetched successfully.");
-            return new ResponseEntity<>(products, HttpStatus.OK);
+            Pageable pageable;
+            if(sortBy != null && !sortBy.isEmpty()) {
+                Sort.Direction sortDirection = (direction == 1) ? Sort.Direction.ASC : Sort.Direction.DESC;
+                pageable = PageRequest.of(page,size, Sort.by(sortDirection, sortBy));
+            }
+            else {
+                pageable = PageRequest.of(page,size);
+            }
+            return new ResponseEntity<>(productService.search(name, minPrice, maxPrice, pageable), HttpStatus.OK);
         } catch(Exception e) {
             logger.log(Level.WARNING, "Encountered a problem while fetching products -- getProductsSortedByPrice in ProductController. - " + e.getMessage());
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
-        }
-    }
-    @GetMapping("/sortedByName")
-    public ResponseEntity<List<Product>> getProductsSortedByName(@RequestParam boolean asc) {
-        try {
-            List<Product> products = productService.getProductsSortedByName(asc);
-            logger.log(Level.INFO, "Sorted Products fetched successfully.");
-            return new ResponseEntity<>(products, HttpStatus.OK);
-        } catch(Exception e) {
-            logger.log(Level.WARNING, "Encountered a problem while fetching products -- getProductsSortedByName in ProductController. - " + e.getMessage());
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 }

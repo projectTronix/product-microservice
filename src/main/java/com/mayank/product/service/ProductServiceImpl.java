@@ -4,12 +4,16 @@ import com.mayank.product.dto.Product;
 import com.mayank.product.exception.ResourceNotFoundException;
 import com.mayank.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -21,6 +25,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final LogManager logManager = LogManager.getLogManager();
     private final Logger logger = logManager.getLogger(Logger.GLOBAL_LOGGER_NAME);
+    private final MongoTemplate mongoTemplate;
     @Override
     public List<Product> getAllProducts() throws Exception {
         try {
@@ -48,46 +53,41 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public boolean deleteProductById(String id) throws Exception {
         try {
+            boolean isEmpty = productRepository.findById(id).isEmpty();
+            if(isEmpty) {
+                throw new ResourceNotFoundException("No product found to delete.");
+            }
             productRepository.deleteById(id);
-            boolean status = productRepository.findById(id).isEmpty();
-            if(!status) {
-                return false;
-            }
-            return true;
+            return productRepository.findById(id).isEmpty();
         } catch(Exception e) {
-            logger.log(Level.WARNING, e.getMessage());
+            logger.log(Level.WARNING, "Encountered a problem in deleteProductById in ProductService " + e.getMessage());
             throw new Exception(e.getMessage());
         }
     }
-
     @Override
-    public List<Product> getProductsSortedByPrice(boolean asc) throws Exception {
+    public Page<Product> search(String name, Integer minPrice, Integer maxPrice, Pageable pageable) throws Exception {
         try {
-            Sort.Direction sortDirection = Sort.Direction.ASC;
-            if(!asc) sortDirection = Sort.Direction.DESC;
-            List<Product> products = productRepository.findAll(Sort.by(sortDirection, "price"));
-            if(products.isEmpty()) {
-                throw new ResourceNotFoundException("No products found.");
+            Query query = new Query().with(pageable);
+            List<Criteria> criteria = new ArrayList<>();
+
+            if(name !=null && !name.isEmpty()) {
+                criteria.add(Criteria.where("title").regex(name,"i"));
+                criteria.add(Criteria.where("description").regex(name,"i"));
             }
+
+            if(minPrice !=null && maxPrice !=null) {
+                criteria.add(Criteria.where("price").gte(minPrice).lte(maxPrice));
+            }
+            if(!criteria.isEmpty()) {
+                query.addCriteria(new Criteria()
+                        .andOperator(criteria.toArray(new Criteria[0])));
+            }
+            Page<Product> products = PageableExecutionUtils.getPage(
+                    mongoTemplate.find(query, Product.class
+                    ), pageable, () -> mongoTemplate.count(query.skip(0).limit(0),Product.class));
             return products;
         } catch(Exception e) {
-            logger.log(Level.WARNING, "Encountered a problem in getProductsSorted in ProductService " + e.getMessage());
-            throw new Exception(e.getMessage());
-        }
-    }
-
-    @Override
-    public List<Product> getProductsSortedByName(boolean asc) throws Exception {
-        try {
-            Sort.Direction sortDirection = Sort.Direction.ASC;
-            if(!asc) sortDirection = Sort.Direction.DESC;
-            List<Product> products = productRepository.findAll(Sort.by(sortDirection, "title"));
-            if(products.isEmpty()) {
-                throw new ResourceNotFoundException("No products found.");
-            }
-            return products;
-        } catch(Exception e) {
-            logger.log(Level.WARNING, "Encountered a problem in getProductsSortedByName in ProductService " + e.getMessage());
+            logger.log(Level.WARNING, "Encountered a problem in getAllProducts in ProductService " + e.getMessage());
             throw new Exception(e.getMessage());
         }
     }
