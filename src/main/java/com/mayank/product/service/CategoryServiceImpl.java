@@ -61,8 +61,22 @@ public class CategoryServiceImpl implements CategoryService {
             }
             return opt.get();
         } catch(Exception e) {
-            logger.log(Level.WARNING, "Encountered a problem while fetching Category ID from title in getCategoryByTitle in CategoryService -" + e.getMessage());
+            logger.log(Level.WARNING, "Encountered a problem while fetching Category from title in getCategoryByTitle in CategoryService -" + e.getMessage());
             throw new Exception("Encountered a problem while fetching Category from title.");
+        }
+    }
+
+    @Override
+    public Category getCategoryById(String categoryId) throws Exception {
+        try {
+            Optional<Category> opt = categoryRepository.findById(categoryId);
+            if(opt.isEmpty()) {
+                throw new ResourceNotFoundException("Invalid Category Title.");
+            }
+            return opt.get();
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching Category from id in getCategoryById in CategoryService -" + e.getMessage());
+            throw new Exception("Encountered a problem while fetching Category from id.");
         }
     }
 

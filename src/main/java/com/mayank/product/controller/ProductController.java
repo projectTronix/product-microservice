@@ -30,17 +30,17 @@ public class ProductController {
     private final LogManager logManager = LogManager.getLogManager();
     private final Logger logger = logManager.getLogger(Logger.GLOBAL_LOGGER_NAME);
 
-    @GetMapping("/all")
-    public ResponseEntity<List<Product>> getAllProducts() {
-        try {
-            List<Product> products = productService.getAllProducts();
-            logger.log(Level.INFO, "Products fetched successfully.");
-            return new ResponseEntity<>(products, HttpStatus.OK);
-        } catch(Exception e) {
-            logger.log(Level.WARNING, "Encountered a problem while fetching products -- getAllProducts in ProductController. - " + e.getMessage());
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
-        }
-    }
+//    @GetMapping("/all")
+//    public ResponseEntity<List<Product>> getAllProducts() {
+//        try {
+//            List<Product> products = productService.getAllProducts();
+//            logger.log(Level.INFO, "Products fetched successfully.");
+//            return new ResponseEntity<>(products, HttpStatus.OK);
+//        } catch(Exception e) {
+//            logger.log(Level.WARNING, "Encountered a problem while fetching products -- getAllProducts in ProductController. - " + e.getMessage());
+//            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+//        }
+//    }
     @PostMapping("/add")
     public CustomResponse postProduct(@RequestBody Product product) {
         try {
@@ -48,15 +48,16 @@ public class ProductController {
             String description = product.getDescription();
             String imgUrl = product.getImageUrl();
             Integer price = product.getPrice();
+            String categoryTitle = product.getCategoryTitle();
             if(price <= 0) {
                 logger.log(Level.WARNING, "Price cannot be less than 0.");
                 throw new Exception("Price cannot be less than 0..");
             }
             String categoryID = categoryService.getCategoryIDByTitle(product.getCategoryID());
             product.setCategoryID(categoryID);
-            if(title.isBlank() || description.isBlank() || imgUrl.isBlank()) {
-                logger.log(Level.WARNING, "Title or Description or Image URL is Empty.");
-                throw new Exception("Title or Description or Image URL is Empty.");
+            if(title.isBlank() || description.isBlank() || imgUrl.isBlank() || categoryTitle.isBlank()) {
+                logger.log(Level.WARNING, "Title or Description or Image URL or CategoryTitle is Empty.");
+                throw new Exception("Title or Description or Image URL or CategoryTitle is Empty.");
             }
             boolean status = productService.saveProduct(product);
             if(!status) throw new Exception();
@@ -81,9 +82,10 @@ public class ProductController {
             return new CustomResponse("Encountered a problem while deleting the product.", HttpStatus.BAD_REQUEST);
         }
     }
-    @GetMapping("/search")
+    @GetMapping("/all")
     public ResponseEntity<Page<Product>> searchPerson(
             @RequestParam(required = false) String name,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) Integer minPrice,
             @RequestParam(required = false) Integer maxPrice,
             @RequestParam(required = false) String sortBy,
@@ -100,7 +102,7 @@ public class ProductController {
             else {
                 pageable = PageRequest.of(page,size);
             }
-            return new ResponseEntity<>(productService.search(name, minPrice, maxPrice, pageable), HttpStatus.OK);
+            return new ResponseEntity<>(productService.search(name, category, minPrice, maxPrice, pageable), HttpStatus.OK);
         } catch(Exception e) {
             logger.log(Level.WARNING, "Encountered a problem while fetching products -- getProductsSortedByPrice in ProductController. - " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

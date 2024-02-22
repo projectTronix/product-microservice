@@ -12,4 +12,5 @@ public interface CategoryService {
     boolean saveCategory(Category category) throws Exception;
     String getCategoryIDByTitle(String title) throws Exception;
     Category getCategoryByTitle(String title) throws Exception;
+    Category getCategoryById(String categoryId) throws Exception;
 }

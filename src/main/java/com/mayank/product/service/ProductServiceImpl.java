@@ -65,16 +65,17 @@ public class ProductServiceImpl implements ProductService {
         }
     }
     @Override
-    public Page<Product> search(String name, Integer minPrice, Integer maxPrice, Pageable pageable) throws Exception {
+    public Page<Product> search(String name, String category, Integer minPrice, Integer maxPrice, Pageable pageable) throws Exception {
         try {
             Query query = new Query().with(pageable);
             List<Criteria> criteria = new ArrayList<>();
 
             if(name !=null && !name.isEmpty()) {
-                criteria.add(Criteria.where("title").regex(name,"i"));
-                criteria.add(Criteria.where("description").regex(name,"i"));
+                criteria.add(new Criteria().orOperator(Criteria.where("title").regex(name,"i"),Criteria.where("description").regex(name,"i")));
             }
-
+            if(category !=null && !category.isEmpty()) {
+                criteria.add(Criteria.where("categoryTitle").regex(category,"i"));
+            }
             if(minPrice !=null && maxPrice !=null) {
                 criteria.add(Criteria.where("price").gte(minPrice).lte(maxPrice));
             }
@@ -82,6 +83,7 @@ public class ProductServiceImpl implements ProductService {
                 query.addCriteria(new Criteria()
                         .andOperator(criteria.toArray(new Criteria[0])));
             }
+
             Page<Product> products = PageableExecutionUtils.getPage(
                     mongoTemplate.find(query, Product.class
                     ), pageable, () -> mongoTemplate.count(query.skip(0).limit(0),Product.class));
