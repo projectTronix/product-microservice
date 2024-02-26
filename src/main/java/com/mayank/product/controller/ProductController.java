@@ -14,8 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -68,9 +67,12 @@ public class ProductController {
             return new CustomResponse("Encountered a problem while adding product.", HttpStatus.BAD_REQUEST);
         }
     }
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public CustomResponse deleteProduct(@PathVariable("id") String id) {
         try {
+            if(id.isBlank()) {
+                throw new Exception("No product id provided");
+            }
             boolean status = productService.deleteProductById(id);
             if(!status) {
                 throw new Exception();
