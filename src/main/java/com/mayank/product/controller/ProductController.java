@@ -1,5 +1,6 @@
 package com.mayank.product.controller;
 
+import com.mayank.product.dto.Category;
 import com.mayank.product.dto.CustomResponse;
 import com.mayank.product.dto.Product;
 import com.mayank.product.service.CategoryService;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
-
+@CrossOrigin("*")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("products/")
@@ -93,7 +94,7 @@ public class ProductController {
             @RequestParam(required = false) String sortBy,
             @RequestParam(defaultValue = "1") Integer direction,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "5") Integer size
+            @RequestParam(defaultValue = "6") Integer size
     ) {
         try {
             Pageable pageable;
@@ -107,6 +108,17 @@ public class ProductController {
             return new ResponseEntity<>(productService.search(name, category, minPrice, maxPrice, pageable), HttpStatus.OK);
         } catch(Exception e) {
             logger.log(Level.WARNING, "Encountered a problem while fetching products -- getProductsSortedByPrice in ProductController. - " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable("id") String id) {
+        try {
+            Product product = productService.getProductById(id);
+            logger.log(Level.INFO, "Product fetched Successfully.");
+            return new ResponseEntity<>(product, HttpStatus.OK);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching product -- getProductById in ProductController : " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }

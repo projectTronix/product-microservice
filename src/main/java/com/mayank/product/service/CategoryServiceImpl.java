@@ -71,7 +71,7 @@ public class CategoryServiceImpl implements CategoryService {
         try {
             Optional<Category> opt = categoryRepository.findById(categoryId);
             if(opt.isEmpty()) {
-                throw new ResourceNotFoundException("Invalid Category Title.");
+                throw new ResourceNotFoundException("Invalid Category Id.");
             }
             return opt.get();
         } catch(Exception e) {

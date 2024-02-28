@@ -1,5 +1,6 @@
 package com.mayank.product.service;
 
+import com.mayank.product.dto.Category;
 import com.mayank.product.dto.Product;
 import com.mayank.product.exception.ResourceNotFoundException;
 import com.mayank.product.repository.ProductRepository;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -91,6 +93,19 @@ public class ProductServiceImpl implements ProductService {
         } catch(Exception e) {
             logger.log(Level.WARNING, "Encountered a problem in getAllProducts in ProductService " + e.getMessage());
             throw new Exception(e.getMessage());
+        }
+    }
+    @Override
+    public Product getProductById(String id) throws Exception {
+        try {
+            Optional<Product> opt = productRepository.findById(id);
+            if(opt.isEmpty()) {
+                throw new ResourceNotFoundException("Invalid Product ID.");
+            }
+            return opt.get();
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching Product from id in getProductById in ProductService -" + e.getMessage());
+            throw new Exception("Encountered a problem while fetching Product from id.");
         }
     }
 }

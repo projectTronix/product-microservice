@@ -14,4 +14,5 @@ public interface ProductService {
     boolean deleteProductById(String id) throws Exception;
     // -1 for desc and 1 for asc
     Page<Product> search(String name, String category, Integer minPrice, Integer maxPrice, Pageable pageable) throws Exception;
+    Product getProductById(String id) throws Exception;
 }
