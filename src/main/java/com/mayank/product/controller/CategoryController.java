@@ -64,4 +64,21 @@ public class CategoryController {
             return new ResponseEntity<>("Encountered a problem while fetching category.", HttpStatus.NOT_FOUND);
         }
     }
+    @DeleteMapping("/delete/{title}")
+    public CustomResponse deleteCategory(@PathVariable("title") String title) {
+        try {
+            if(title.isBlank()) {
+                throw new Exception("No category title provided");
+            }
+            boolean status = categoryService.deleteCategoryById(categoryService.getCategoryIDByTitle(title));
+            if(!status) {
+                throw new Exception();
+            }
+            logger.log(Level.INFO, "Category deleted Successfully.");
+            return new CustomResponse("Category Deleted Successfully.", HttpStatus.OK);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while deleting Category -- deleteCategoryById in CategoryController. - " + e.getMessage());
+            return new CustomResponse("Encountered a problem while deleting the Category.", HttpStatus.BAD_REQUEST);
+        }
+    }
 }

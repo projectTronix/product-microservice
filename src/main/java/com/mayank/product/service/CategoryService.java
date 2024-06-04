@@ -13,4 +13,5 @@ public interface CategoryService {
     String getCategoryIDByTitle(String title) throws Exception;
     Category getCategoryByTitle(String title) throws Exception;
     Category getCategoryById(String categoryId) throws Exception;
+    boolean deleteCategoryById(String id) throws Exception;
 }

@@ -80,4 +80,19 @@ public class CategoryServiceImpl implements CategoryService {
         }
     }
 
+    @Override
+    public boolean deleteCategoryById(String id) throws Exception {
+        try {
+            boolean isEmpty = categoryRepository.findById(id).isEmpty();
+            if(isEmpty) {
+                throw new ResourceNotFoundException("No category found to delete.");
+            }
+            categoryRepository.deleteById(id);
+            return categoryRepository.findById(id).isEmpty();
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem in deleteCategoryById in CategoryService " + e.getMessage());
+            throw new Exception(e.getMessage());
+        }
+    }
+
 }

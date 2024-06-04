@@ -86,7 +86,7 @@ public class ProductController {
         }
     }
     @GetMapping("/all")
-    public ResponseEntity<Page<Product>> searchPerson(
+    public ResponseEntity<Page<Product>> searchProduct(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Integer minPrice,
