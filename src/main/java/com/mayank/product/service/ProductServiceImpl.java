@@ -108,4 +108,18 @@ public class ProductServiceImpl implements ProductService {
             throw new Exception("Encountered a problem while fetching Product from id.");
         }
     }
+
+    @Override
+    public List<Product> getProductsByCategoryId(String categoryId) throws Exception {
+        try {
+            Optional<List<Product>> opt = productRepository.findByCategoryID(categoryId);
+            if(opt.isEmpty()) {
+                throw new ResourceNotFoundException("No products found by Category Id.");
+            }
+            return opt.get();
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching Products by category in getProductById in ProductService -" + e.getMessage());
+            throw new Exception("Encountered a problem while fetching Products by category.");
+        }
+    }
 }

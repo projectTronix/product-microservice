@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -119,6 +120,17 @@ public class ProductController {
             return new ResponseEntity<>(product, HttpStatus.OK);
         } catch(Exception e) {
             logger.log(Level.WARNING, "Encountered a problem while fetching product -- getProductById in ProductController : " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    @GetMapping("/category/{categoryTitle}")
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable("categoryTitle") String categoryTitle) {
+        try {
+            List<Product> productList = productService.getProductsByCategoryId(categoryService.getCategoryIDByTitle(categoryTitle));
+            logger.log(Level.INFO, "Products by Category fetched Successfully.");
+            return new ResponseEntity<>(productList, HttpStatus.OK);
+        } catch(Exception e) {
+            logger.log(Level.WARNING, "Encountered a problem while fetching products by category -- getProductsByCategory in ProductController : " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
